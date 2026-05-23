@@ -632,49 +632,67 @@
 
     /* ═══ WATCH SECTION ═══ */
 
-    // Reveal gyro hook — returns offsetX (-1 to 1) based on device tilt, respects lock
-    const useRevealGyro = (locked) => {
-        const [offsetX, setOffsetX] = React.useState(0);
-        const baseGammaRef = React.useRef(null);
+    // Gyro hook — returns smooth device rotation angle in degrees (gamma: left/right tilt)
+    const useDeviceRotation = (enabled) => {
+        const angleRef = React.useRef(0);
+        const targetRef = React.useRef(0);
         const rafRef = React.useRef(null);
-        const latestGamma = React.useRef(0);
+        const [angle, setAngle] = React.useState(0);
 
         React.useEffect(() => {
-            if (locked) { setOffsetX(0); baseGammaRef.current = null; return; }
+            if (!enabled) {
+                targetRef.current = 0;
+                angleRef.current = 0;
+                setAngle(0);
+                return;
+            }
 
-            const handler = (e) => {
-                const gamma = e.gamma || 0; // -90 to 90, left/right tilt
-                latestGamma.current = gamma;
+            const onOrientation = (e) => {
+                // gamma: -90 (tilted left) to +90 (tilted right)
+                // We clamp to ±90 and use it directly as rotation degrees
+                const g = Math.max(-90, Math.min(90, e.gamma || 0));
+                targetRef.current = g;
             };
 
             const tick = () => {
-                const gamma = latestGamma.current;
-                if (baseGammaRef.current === null) baseGammaRef.current = gamma;
-                const delta = gamma - baseGammaRef.current;
-                // Map ±30° tilt to ±1 offset, clamped
-                const raw = Math.max(-1, Math.min(1, delta / 30));
-                setOffsetX(prev => prev + (raw - prev) * 0.12); // smooth lerp
+                // Smooth lerp toward target
+                const diff = targetRef.current - angleRef.current;
+                angleRef.current += diff * 0.1;
+                setAngle(angleRef.current);
                 rafRef.current = requestAnimationFrame(tick);
             };
 
-            window.addEventListener('deviceorientation', handler, true);
+            window.addEventListener('deviceorientation', onOrientation, true);
             rafRef.current = requestAnimationFrame(tick);
+
             return () => {
-                window.removeEventListener('deviceorientation', handler, true);
+                window.removeEventListener('deviceorientation', onOrientation, true);
                 cancelAnimationFrame(rafRef.current);
             };
-        }, [locked]);
+        }, [enabled]);
 
-        return offsetX;
+        return angle;
     };
 
-    const ReelPlayer = ({ item, isActive, isMuted, toggleMute, revealLocked }) => {
+    const ReelPlayer = ({ item, isActive, isMuted, toggleMute, revealEnabled }) => {
         const videoRef = useRef(null);
-        const offsetX = useRevealGyro(revealLocked);
+        const wrapRef = useRef(null);
+        const angle = useDeviceRotation(revealEnabled && isActive);
 
-        // How much wider the video is vs container (reveal amount). 30% extra width = 15% shift max
-        const REVEAL_EXTRA = 0.30; // 30% wider
-        const shiftPercent = offsetX * (REVEAL_EXTRA / 2) * 100; // max ±15%
+        // angle goes 0 (portrait) → ±90 (landscape)
+        // We rotate the video by -angle so it counter-rotates and stays upright relative to world
+        // As phone tilts right (+90°), video rotates -90° → appears landscape
+        // Scale compensates so video fills the screen at any rotation
+        // At 0°: video fills portrait container normally
+        // At ±90°: video is rotated 90° — we scale it so its (landscape) width fills portrait height
+        const absAngle = Math.abs(angle);
+        const progress = Math.min(absAngle / 90, 1); // 0 → 1 as phone goes portrait → landscape
+
+        // Interpolate scale: at portrait scale=1, at landscape scale = vw/vh (fill screen rotated)
+        // Since video is rotated, its painted width becomes vh and painted height becomes vw
+        // To fill: scale = max(vw/vh, vh/vw) at full rotation. Approximate with aspect ratio ~9/16
+        const scaleAtLandscape = 16 / 9; // ~1.78
+        const scale = 1 + (scaleAtLandscape - 1) * progress;
 
         useEffect(() => {
             if (!videoRef.current || !item.url) return;
@@ -683,40 +701,42 @@
                 hls.loadSource(item.url); hls.attachMedia(videoRef.current);
             }
         }, [item]);
+
         useEffect(() => {
-            if (isActive) videoRef.current?.play().catch(e => console.log("Autoplay prevented:", e));
-            else { videoRef.current?.pause(); if(videoRef.current) videoRef.current.currentTime = 0; }
+            if (isActive) videoRef.current?.play().catch(() => {});
+            else { videoRef.current?.pause(); if (videoRef.current) videoRef.current.currentTime = 0; }
         }, [isActive]);
 
         return (
-            <div className="relative w-full h-full bg-black cursor-pointer overflow-hidden" onClick={toggleMute}>
-                {/* Video is wider than container; translateX shifts to reveal hidden edges */}
+            <div ref={wrapRef} style={{position:'relative',width:'100%',height:'100%',background:'#000',overflow:'hidden',cursor:'pointer'}} onClick={toggleMute}>
                 <video
                     ref={videoRef}
-                    src={item.type==='video'?item.url:undefined}
+                    src={item.type === 'video' ? item.url : undefined}
                     style={{
-                        width: `${(1 + REVEAL_EXTRA) * 100}%`,
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        width: '100%',
                         height: '100%',
                         objectFit: 'cover',
-                        position: 'absolute',
-                        top: 0,
-                        left: `${-REVEAL_EXTRA/2*100}%`,
-                        transform: `translateX(${shiftPercent}%)`,
-                        transition: revealLocked ? 'transform 0.3s ease' : 'none',
+                        transform: `translate(-50%, -50%) rotate(${-angle}deg) scale(${scale})`,
+                        transformOrigin: 'center center',
                         willChange: 'transform',
                     }}
                     loop playsInline muted={isMuted}
                 />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 p-4 rounded-full pointer-events-none transition-opacity duration-500 opacity-0 data-[show=true]:opacity-100" data-show={isMuted && isActive}>
-                    <VolumeX className="w-8 h-8 text-white" />
+                {/* Mute indicator */}
+                <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.5)',padding:16,borderRadius:'50%',pointerEvents:'none',transition:'opacity 0.5s',opacity: isMuted && isActive ? 1 : 0}}>
+                    <VolumeX style={{width:32,height:32,color:'white'}}/>
                 </div>
-                {/* Subtle reveal hint bar at bottom when unlocked */}
-                {!revealLocked && isActive && (
-                    <div style={{position:'absolute',bottom:110,left:'50%',transform:'translateX(-50%)',display:'flex',gap:3,alignItems:'center',opacity:0.45,pointerEvents:'none',zIndex:5}}>
-                        <div style={{width:20,height:3,borderRadius:2,background:'white',transform:`scaleX(${1 - Math.abs(offsetX)*0.5})`}}/>
-                        <div style={{width:6,height:6,borderRadius:'50%',background:'white',transform:`translateX(${offsetX*8}px)`,transition:'transform 0.1s'}}/>
-                        <div style={{width:20,height:3,borderRadius:2,background:'white',transform:`scaleX(${1 - Math.abs(offsetX)*0.5})`}}/>
-                    </div>
+                {/* Reveal progress arc indicator */}
+                {revealEnabled && isActive && (
+                    <svg style={{position:'absolute',bottom:108,left:'50%',transform:'translateX(-50%)',pointerEvents:'none',opacity:0.6}} width="40" height="20" viewBox="0 0 40 20">
+                        <path d="M4,16 Q20,4 36,16" stroke="rgba(255,255,255,0.3)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                        <path d={`M4,16 Q20,4 36,16`} stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round"
+                            strokeDasharray="40" strokeDashoffset={40 - progress * 40}/>
+                        <circle cx={4 + progress * 32} cy={16 - Math.sin(progress * Math.PI) * 12} r="3" fill="white"/>
+                    </svg>
                 )}
             </div>
         );
@@ -725,7 +745,7 @@
     const ReelsFeed = ({ reels, onUpdate }) => {
         const [currentIndex, setCurrentIndex] = useState(0);
         const [isMuted, setIsMuted] = useState(true);
-        const [revealLocked, setRevealLocked] = useState(false);
+        const [revealEnabled, setRevealEnabled] = useState(false);
         const containerRef = useRef(null);
 
         // Request deviceorientation permission on iOS 13+
@@ -735,7 +755,10 @@
             }
         }, []);
 
-        useEffect(() => { requestGyro(); }, []);
+        const handleRevealToggle = () => {
+            if (!revealEnabled) requestGyro();
+            setRevealEnabled(e => !e);
+        };
 
         useEffect(() => {
             const el = containerRef.current;
@@ -766,7 +789,7 @@
                     const isActive = index === currentIndex;
                     return (
                         <div key={reel.id} className="reel-snap">
-                            <ReelPlayer item={reel} isActive={isActive} isMuted={isMuted} toggleMute={() => setIsMuted(!isMuted)} revealLocked={revealLocked} />
+                            <ReelPlayer item={reel} isActive={isActive} isMuted={isMuted} toggleMute={() => setIsMuted(!isMuted)} revealEnabled={revealEnabled} />
                             <div className="absolute bottom-0 inset-x-0 p-4 pb-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none flex items-end justify-between z-10">
                                 <div className="flex-1 pr-16 pointer-events-auto">
                                     <h2 className="text-white font-bold text-lg leading-tight mb-2 drop-shadow-md">{reel.title || 'Unknown Entity'}</h2>
@@ -774,26 +797,25 @@
                                 </div>
                             </div>
                             <div className="absolute bottom-6 right-4 flex flex-col gap-6 z-20 pointer-events-auto items-center">
-                                {/* ── REVEAL LOCK BUTTON ── tap once to lock, tap again to unlock */}
-                                <button
-                                    onClick={() => setRevealLocked(l => !l)}
-                                    className="flex flex-col items-center gap-1 rubber-bounce spring-anim"
-                                    title={revealLocked ? 'Reveal locked — tap to unlock' : 'Reveal active — tap to lock'}
-                                >
+                                {/* ── REVEAL ROTATION BUTTON ── tap to enable gyro rotation reveal */}
+                                <button onClick={handleRevealToggle} className="flex flex-col items-center gap-1 rubber-bounce spring-anim">
                                     <div style={{
                                         width:48, height:48, borderRadius:'50%',
                                         display:'flex', alignItems:'center', justifyContent:'center',
-                                        background: revealLocked ? 'rgba(249,115,22,0.35)' : 'rgba(0,0,0,0.4)',
+                                        background: revealEnabled ? 'rgba(249,115,22,0.4)' : 'rgba(0,0,0,0.4)',
                                         backdropFilter:'blur(8px)',
-                                        border: revealLocked ? '1.5px solid rgba(249,115,22,0.7)' : '1.5px solid rgba(255,255,255,0.15)',
-                                        boxShadow: revealLocked ? '0 0 12px rgba(249,115,22,0.4)' : 'none',
+                                        border: revealEnabled ? '2px solid rgba(249,115,22,0.9)' : '1.5px solid rgba(255,255,255,0.2)',
+                                        boxShadow: revealEnabled ? '0 0 16px rgba(249,115,22,0.5),0 0 4px rgba(249,115,22,0.3)' : 'none',
                                         transition:'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-                                        color: revealLocked ? '#f97316' : 'white',
+                                        color: revealEnabled ? '#f97316' : 'rgba(255,255,255,0.85)',
                                     }}>
-                                        {revealLocked
-                                            ? <Lock style={{width:22,height:22}}/>
-                                            : <Unlock style={{width:22,height:22}}/>
-                                        }
+                                        {/* Rotate icon — two arrows in circle */}
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M21.5 2v6h-6"/>
+                                            <path d="M2.5 22v-6h6"/>
+                                            <path d="M21.5 8A10 10 0 0 0 4.1 6.1"/>
+                                            <path d="M2.5 16a10 10 0 0 0 17.4 1.9"/>
+                                        </svg>
                                     </div>
                                 </button>
                                 <button onClick={() => onUpdate(reel.id, { liked: !reel.liked })} className="flex flex-col items-center gap-1 rubber-bounce spring-anim"><div className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/40 backdrop-blur ${reel.liked ? 'text-accent' : 'text-white'}`}><Heart className={`w-6 h-6 ${reel.liked ? 'fill-accent' : ''}`}/></div></button>
