@@ -1,0 +1,288 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0a0a0c"><title>Vault</title>
+<style>
+:root{--bg:#0a0a0c;--cd:#16161a;--c2:#202027;--tx:#f2f2f7;--mu:#8e8e99;--ac:#3b82f6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+#hd{padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 6px;display:flex;justify-content:space-between;align-items:center}
+#hd h1{margin:0;font-size:30px;font-weight:900;text-transform:capitalize}
+#main{flex:1;overflow-y:auto;padding-bottom:90px;-webkit-overflow-scrolling:touch}
+.pad{padding:6px 18px}
+#nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0a0a0cee;border-top:1px solid #ffffff12;padding:8px 4px calc(env(safe-area-inset-bottom,0px) + 8px);z-index:5}
+#nav button{flex:1;background:none;border:0;color:var(--mu);font:700 11px system-ui;display:flex;flex-direction:column;align-items:center;gap:2px}
+#nav button span{font-size:20px}#nav .on{color:var(--ac)}
+h3{margin:22px 0 10px;font-size:19px;font-weight:900}h4{margin:18px 0 8px}
+.row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -18px;padding:0 18px 6px}
+.cd{cursor:pointer;min-width:0}.row .cd{width:112px;flex:none}
+.po{position:relative;aspect-ratio:2/3;background:var(--c2);border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:30px}
+.po img{width:100%;height:100%;object-fit:cover}.po.bl img{filter:blur(14px)}
+.cd p{margin:5px 2px 0;font-size:11px;font-weight:700;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cd small{display:block;text-align:center;color:var(--ac);font-weight:800;font-size:10px}
+.dt{position:absolute;top:5px;left:5px;background:#000b;font-size:10px;padding:2px 6px;border-radius:7px}
+.ck{position:absolute;top:5px;right:5px;background:var(--ac);font-style:normal;font-size:10px;border-radius:50%;width:18px;height:18px;text-align:center;line-height:18px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+input.in,textarea,select{position:static;width:100%;background:var(--c2);color:var(--tx);border:1px solid #ffffff12;border-radius:14px;padding:12px 14px;font:600 14px system-ui;margin:4px 0;height:auto;line-height:1.3}
+textarea{height:160px}
+.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:8px -18px;padding:0 18px}
+.ch,.seg button,.btn2,.sts button{border:1px solid #ffffff12;background:var(--cd);color:var(--mu);font:800 12px system-ui;padding:9px 14px;border-radius:14px;white-space:nowrap}
+.ch.on,.seg .on,.sts .on{background:var(--ac);color:#fff;border-color:transparent}
+.seg{display:flex;gap:6px;background:var(--cd);padding:4px;border-radius:16px;margin-bottom:8px}.seg button{flex:1;border:0;background:none}.seg select{width:70px;margin:0;padding:8px}
+.btn2{display:block;width:100%;text-align:center;background:var(--ac);color:#fff;margin:10px 0;text-decoration:none}
+.btn2.g{background:var(--c2);color:var(--tx)}.lnk{background:none;border:0;color:#f87171;font-weight:700;padding:8px 0}
+.mu{color:var(--mu)}.hid{display:none!important}
+.sh{position:fixed;inset:0;background:var(--bg);z-index:20;display:none;overflow-y:auto}.sh.open{display:block}
+.hero{height:230px;background:#222 center/cover;position:relative}.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,var(--bg))}
+.x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:14px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:#000a;color:#fff;font-size:16px}
+.dpad{padding:0 18px 60px;margin-top:-50px;position:relative;z-index:1}.dh{display:flex;gap:14px;align-items:flex-end}.dh img{width:100px;border-radius:14px;background:var(--c2);aspect-ratio:2/3;object-fit:cover}.dh h2{margin:0 0 4px;font-size:24px}
+.sts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 4px}
+.tg{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.t{background:var(--c2);padding:5px 10px;border-radius:9px;font-size:11px;font-weight:700}.t.r{background:#ef444426;color:#f87171}.t.a{background:#f59e0b26;color:#fbbf24}.t.p{background:#ec489926;color:#f472b6}
+.ov{line-height:1.55;opacity:.9}.pv{display:flex;justify-content:space-between;background:var(--cd);padding:11px 14px;border-radius:13px;margin:5px 0}
+.ok,.bad{display:flex;justify-content:space-between;padding:10px 12px;border-radius:12px;margin:6px 0;font-weight:700;font-size:12px}.ok{background:#22c55e1a;color:#4ade80}.bad{background:#ef44441a;color:#f87171}
+.card{background:var(--cd);border-radius:20px;padding:14px 16px;margin:10px 0}.card label{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-weight:700}
+.tab{display:flex;gap:6px;padding:calc(env(safe-area-inset-top,0px) + 12px) 18px 4px}.tab button{flex:1}
+#toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:16px;right:16px;background:#222;border-radius:16px;padding:14px;font-weight:700;z-index:50;opacity:0;pointer-events:none;transition:.25s;transform:translateY(-20px)}#toast.show{opacity:1;transform:none}
+.spin{width:30px;height:30px;border:3px solid #ffffff22;border-top-color:var(--ac);border-radius:50%;animation:s 1s linear infinite;margin:30px auto}@keyframes s{to{transform:rotate(360deg)}}
+</style></head><body>
+<header id="hd"></header><main id="main"></main><nav id="nav"></nav><div class="sh" id="sheet"></div><div id="toast"></div>
+<script>
+(()=>{
+const TOKEN='eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIzMTU1ZmRiNDk3Zjc1NzVhMTQ0ZjI2YWRlYmNiZjk4MCIsIm5iZiI6MTc3NTcwNjIzNy43NDUsInN1YiI6IjY5ZDcyMDdkNmJiYTRiYzAzOTEwNjI2ZSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ._4WdklzSx9za_YAGeMlABQ1jMEOPCLa6mEWtGQLqrw0',JWU='https://yellow-meadow-06cc.ggam1097.workers.dev',META=3,JIKAN='https://api.jikan.moe/v4';
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}};
+const day=n=>new Date(Date.now()+(n||0)*864e5).toISOString().slice(0,10);
+const deb=(f,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms)}};
+const vib=()=>navigator.vibrate&&navigator.vibrate(30);
+const pool=async(arr,n,fn)=>{const out=[];let i=0;await Promise.all(Array.from({length:Math.min(n,arr.length)},async()=>{while(i<arr.length){const k=i++;try{out[k]=await fn(arr[k],k)}catch{out[k]=null}}}));return out};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2600)};
+
+/* ---------- state (same localStorage keys as the old app) ---------- */
+let S={upRegion:'IN',adult:false,language:'en-US',tmdbKey:'',tmdbBase:'',imgBase:'',wmKey:'',...LS.get('omni16_settings',{})};
+const saveS=()=>LS.set('omni16_settings',S);
+let V=(()=>{const seen=new Set;return(LS.get('omni16_data',[])||[]).filter(d=>d&&d.aid!=null&&d.type&&d.title).map(d=>({...d,id:d.type+'_'+d.aid})).filter(d=>!seen.has(d.id)&&seen.add(d.id))})();
+const PL=LS.get('omni16_lists',[]);
+const persist=deb(()=>{LS.set('omni16_lists',PL);if(!LS.set('omni16_data',V))toast('Storage full — export a backup in Settings')},250);
+
+/* ---------- network ---------- */
+async function jf(url,o={},ms=10000){const c=new AbortController,t=setTimeout(()=>c.abort(),ms);try{return await(await fetch(url,{...o,signal:c.signal})).json()}finally{clearTimeout(t)}}
+const base=()=>(S.tmdbBase||'https://api.themoviedb.org/3').replace(/\/$/,'');
+const img=(p,z='w342')=>p?`${(S.imgBase||'https://image.tmdb.org/t/p').replace(/\/$/,'')}/${z}${p}`:'';
+const tm=(path,q={})=>jf(`${base()}${path}?${new URLSearchParams({language:S.language||'en-US',...q})}`,{headers:{Authorization:'Bearer '+(S.tmdbKey||TOKEN)}});
+const ani=(query,variables)=>jf('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query,variables})});
+const mem={};
+async function cached(k,ttl,fn){const m=mem[k];if(m&&Date.now()-m.t<ttl)return m.v;const l=LS.get('c_'+k,null);if(l&&Date.now()-l.t<ttl){mem[k]=l;return l.v}const v=await fn();mem[k]={t:Date.now(),v};LS.set('c_'+k,mem[k]);return v}
+const pruneCache=(all)=>{Object.keys(localStorage).filter(k=>k.startsWith('c_')).forEach(k=>{const v=LS.get(k,null);if(all||!v||Date.now()-v.t>2*864e5)localStorage.removeItem(k)})};
+const mk=(x,t)=>({id:t+'_'+x.id,aid:x.id,type:t,title:x.title||x.name,image:img(x.poster_path),year:(x.release_date||x.first_air_date||'').slice(0,4),releaseDate:x.release_date||x.first_air_date||''});
+const aniItem=m=>({id:'anime_'+m.idMal,aid:m.idMal,type:'anime',title:m.title.english||m.title.romaji,image:m.coverImage&&m.coverImage.large,year:m.startDate&&m.startDate.year?String(m.startDate.year):'',animeFormat:m.format||''});
+const dfmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'TBA';
+const rel=d=>{if(!d)return'TBA';const n=Math.round((new Date(d+'T00:00:00')-new Date(day()+'T00:00:00'))/864e5);return n===0?'Today':n===1?'Tomorrow':n>0?`in ${n}d`:`${-n}d ago`};
+
+/* ---------- tagging (the core fix) ---------- */
+const STRICT=['NC-17','NC17','X','XXX','R18','R18+','R-18','18','18+','A','ADULTS ONLY'],MATURE=['R','TV-MA','17+','MA15+','U/A 18+'];
+const HARD=/erotic|softcore|sexploitation|pornograph|explicit sex|nudity|sex scene|hardcore|sexual content/;
+function tags(d,t){
+ const regs=[S.upRegion,'IN','US','GB'],r=[];
+ if(t==='movie')(d.release_dates&&d.release_dates.results||[]).filter(x=>regs.includes(x.iso_3166_1)).forEach(x=>(x.release_dates||[]).forEach(y=>y.certification&&r.push({c:y.certification.toUpperCase(),r:x.iso_3166_1})));
+ else(d.content_ratings&&d.content_ratings.results||[]).filter(x=>regs.includes(x.iso_3166_1)).forEach(x=>x.rating&&r.push({c:x.rating.toUpperCase(),r:x.iso_3166_1}));
+ const kw=((t==='movie'?d.keywords&&d.keywords.keywords:d.keywords&&d.keywords.results)||[]).map(k=>k.name.toLowerCase());
+ const cs=r.map(x=>x.c),hard=kw.some(k=>HARD.test(k));
+ const lvl=d.adult||cs.some(c=>STRICT.includes(c))||(hard&&cs.some(c=>MATURE.includes(c)))?2:cs.some(c=>MATURE.includes(c))||hard?1:0;
+ const genres=(d.genres||[]).map(g=>g.name);
+ const isAnime=genres.includes('Animation')&&(d.original_language==='ja'||(d.origin_country||[]).includes('JP')||kw.some(k=>/anime/.test(k)));
+ const c=r.find(x=>x.r===S.upRegion)||r.find(x=>x.r==='IN')||r[0];
+ return{genres,certification:c?c.c:'',adultLevel:lvl,isMature:lvl===2,isAnime,meta:META}}
+const aniLvl=m=>m.isAdult||(m.genres||[]).some(g=>/hentai|erotica/i.test(g))?2:(m.genres||[]).includes('Ecchi')||(m.tags||[]).some(x=>['Gore','Nudity','Rape'].includes(x.name)&&(x.rank||0)>=50)?1:0;
+
+let scanning=false;const failed=new Set;
+async function scan(){
+ if(scanning)return;scanning=true;
+ try{for(let n=0;n<80;n++){
+  const todo=V.filter(i=>i.meta!==META&&!failed.has(i.id)).slice(0,40);if(!todo.length)break;
+  const out={},an=todo.filter(i=>i.type==='anime'),tv=todo.filter(i=>i.type!=='anime');
+  if(an.length){try{const d=await ani('query($ids:[Int]){Page(perPage:50){media(idMal_in:$ids,type:ANIME){idMal genres isAdult format duration episodes tags{name rank}}}}',{ids:an.map(i=>i.aid)});
+   d.data.Page.media.forEach(m=>{const it=an.find(i=>i.aid===m.idMal);if(!it)return;const l=aniLvl(m);out[it.id]={genres:m.genres||[],adultLevel:l,isMature:l===2,animeFormat:m.format||'',isAnime:true,runtime:m.duration||undefined,meta:META}})}catch{}
+   for(const i of an.filter(i=>!out[i.id]).slice(0,5)){try{const p=await jf(`${JIKAN}/anime/${i.aid}`,{},6000);if(!p.data)throw 0;const g=[...(p.data.genres||[]),...(p.data.explicit_genres||[])].map(x=>x.name),rt=(p.data.rating||'').split(' - ')[0],l=/^Rx/i.test(rt)||g.includes('Hentai')?2:/^R/.test(rt)||g.includes('Ecchi')?1:0;out[i.id]={genres:g,adultLevel:l,isMature:l===2,animeFormat:(p.data.type||'').toUpperCase(),isAnime:true,meta:META}}catch{}}}
+  await pool(tv,4,async i=>{const d=await tm(`/${i.type}/${i.aid}`,{append_to_response:(i.type==='movie'?'release_dates':'content_ratings')+',keywords'});if(d.success===false||d.id==null)throw 0;out[i.id]={...tags(d,i.type),runtime:d.runtime||(d.episode_run_time||[])[0]||i.runtime}});
+  todo.forEach(i=>{if(!out[i.id])failed.add(i.id)});
+  V=V.map(i=>out[i.id]?{...i,...out[i.id]}:i);persist();if(tab==='vault')vgrid();
+ }}finally{scanning=false}}
+
+/* ---------- shared UI ---------- */
+const reg=new Map;
+const card=(i,o={})=>{reg.set(i.id,i);const inV=V.some(x=>x.id===i.id);return`<div class="cd" data-open="${esc(i.id)}"><div class="po${o.blur?' bl':''}">${i.image?`<img loading="lazy" src="${esc(i.image)}" alt="">`:'🎬'}${o.date?`<b class="dt">${dfmt(i.releaseDate)}</b>`:''}${inV?'<i class="ck">✓</i>':''}</div><p>${esc(i.title)}</p>${o.date?`<small>${rel(i.releaseDate)}</small>`:i.year?`<small>${i.year}</small>`:''}</div>`};
+const rowH=(t,items,o)=>items&&items.length?`<h3>${t}</h3><div class="row">${items.map(i=>card(i,o)).join('')}</div>`:'';
+const spin='<div class="spin"></div>';
+
+/* ---------- Explore ---------- */
+const EX={};let exFails=[],exBusy=false;
+const seed=()=>Math.floor(Date.now()/864e5)+(+LS.get('shuf',0));
+const pg=(n,m)=>1+((seed()*7+n*13)%m);
+const Dc=(g,x)=>tm('/discover/'+g,{include_adult:'false',...x});
+const L=(r,t)=>((r&&r.results)||[]).filter(x=>x.poster_path).map(x=>mk(x,t||x.media_type)).slice(0,14);
+const both=async(qm,qt,sort)=>{const[a,b]=await Promise.all([Dc('movie',qm),Dc('tv',qt)]);return[...L(a,'movie'),...L(b,'tv')].sort(sort||(()=>0)).slice(0,14)};
+const byDate=(a,b)=>(b.releaseDate||'').localeCompare(a.releaseDate||'');
+function exDefs(){const w=day(-150),n=day(0),sg=`${S.upRegion}|${S.adult}|${S.language}|${S.tmdbBase}`;return[
+ ['trend','🔥 Trending',()=>tm('/trending/all/week').then(r=>L(r)),12e5,{}],
+ ['soon','📅 Coming Soon (theatres)',()=>upc({prov:'theatres',kind:'movie',mode:'soon',region:S.upRegion,page:1}).then(r=>r.items.slice(0,14)),36e5,{date:1}],
+ ['movies','🎬 Popular Movies',()=>tm('/trending/movie/week').then(r=>L(r,'movie')),12e5,{}],
+ ['tv','📺 Popular Series',()=>tm('/trending/tv/week').then(r=>L(r,'tv')),12e5,{}],
+ ['anime','✨ Trending Anime',()=>ani('query{Page(perPage:20){media(type:ANIME,sort:TRENDING_DESC,isAdult:false){idMal format title{romaji english}coverImage{large}startDate{year}}}}').then(d=>d.data.Page.media.filter(m=>m.idMal).map(aniItem).slice(0,14)),12e5,{}],
+ ['docnew','🎞 Newest Documentaries',()=>both({with_genres:99,'primary_release_date.gte':w,'primary_release_date.lte':n,sort_by:'primary_release_date.desc','vote_count.gte':2},{with_genres:99,'first_air_date.gte':w,'first_air_date.lte':n,sort_by:'first_air_date.desc','vote_count.gte':1},byDate),36e5,{}],
+ ['docpick','🧠 Documentary Picks (shuffles daily)',()=>both({with_genres:99,sort_by:'vote_average.desc','vote_count.gte':300,page:pg(1,12)},{with_genres:99,sort_by:'vote_average.desc','vote_count.gte':100,page:pg(2,6)}),864e5,{}],
+ ['steamy','💋 Steamy — newest (R-rated)',()=>Dc('movie',{with_genres:10749,certification_country:'US','certification.gte':'R','primary_release_date.gte':day(-400),'primary_release_date.lte':n,sort_by:'primary_release_date.desc','vote_count.gte':5}).then(r=>L(r,'movie')),36e5,{}],
+ ['steamy2','💋 Steamy picks (shuffles daily)',()=>Dc('movie',{with_genres:10749,certification_country:'US','certification.gte':'R',sort_by:'popularity.desc','vote_count.gte':50,page:pg(3,10)}).then(r=>L(r,'movie')),864e5,{}],
+ ...(S.adult?[['adult18','🔞 18+ Listings (TMDB, tap to reveal)',()=>tm('/discover/movie',{include_adult:'true',sort_by:'primary_release_date.desc','primary_release_date.gte':day(-300),'primary_release_date.lte':n}).then(r=>L(r,'movie')),36e5,{blur:1}]]:[])
+].map(d=>({k:d[0],t:d[1],f:d[2],ttl:d[3],o:d[4],sg}))}
+async function exLoad(force){
+ if(exBusy)return;exBusy=true;exFails=[];if(force){pruneCache(true);Object.keys(mem).forEach(k=>delete mem[k])}
+ const defs=exDefs();
+ await Promise.all(defs.map(d=>cached(`ex|${d.sg}|${d.k}|${d.ttl>=864e5?seed():''}`,d.ttl,d.f).then(v=>{EX[d.k]={t:d.t,v,o:d.o};tab==='explore'&&exPaint(defs)}).catch(()=>exFails.push(d.t))));
+ exBusy=false;tab==='explore'&&exPaint(defs)}
+function exPaint(defs){defs=defs||exDefs();const e=$('#exbody');if(!e)return;
+ e.innerHTML=defs.map(d=>EX[d.k]?rowH(EX[d.k].t,EX[d.k].v,EX[d.k].o):'').join('')+(exFails.length?`<p class="mu">Couldn’t load: ${esc(exFails.join(', '))}. <a href="#" data-a="exr" style="color:var(--ac)">Retry</a> · <a href="#" data-a="go" data-v="settings" style="color:var(--ac)">Diagnose</a></p>`:'')+(exBusy&&!Object.keys(EX).length?spin:'')}
+function explore(){$('#main').innerHTML=`<div class="pad"><div id="exbody">${spin}</div><button class="btn2 g" data-a="shuf">🔀 Shuffle rows</button></div>`;exPaint();exLoad()}
+
+/* ---------- Upcoming ---------- */
+const PROV=[{k:'theatres',l:'🎬 In Theatres'},{k:'all',l:'🌐 All Streaming'},{k:'netflix',l:'Netflix',re:/netflix/i,fb:'8',net:'213'},{k:'prime',l:'Prime Video',re:/prime video/i,fb:'9|119',net:'1024'},{k:'hotstar',l:'JioHotstar',re:/hotstar/i,fb:'122'},{k:'zee5',l:'ZEE5',re:/zee5/i,fb:'232'},{k:'sony',l:'SonyLIV',re:/sony ?liv/i,fb:'237'},{k:'apple',l:'Apple TV+',re:/^apple tv\+?$|apple tv plus/i,fb:'350',net:'2552'},{k:'disney',l:'Disney+',re:/^disney (plus|\+)/i,fb:'337',net:'2739'}];
+async function pids(p,region){try{const ls=await cached('pv|'+region,864e5,async()=>(await Promise.all(['movie','tv'].map(t=>tm('/watch/providers/'+t,{watch_region:region})))).flatMap(x=>(x.results||[]).map(y=>[y.provider_id,y.provider_name])));const m=ls.filter(([,n])=>p.re.test(n)&&!/channel|kids/i.test(n)).map(a=>a[0]);if(m.length)return[...new Set(m)].join('|')}catch{}return p.fb}
+async function wm(p,kind,region,soon){
+ if(!S.wmKey||!p.re)return[];
+ const src=await cached('wms|'+region,864e5,()=>jf(`https://api.watchmode.com/v1/sources/?apiKey=${S.wmKey}&regions=${region}`));
+ const ids=new Set((Array.isArray(src)?src:[]).filter(s=>p.re.test(s.name)).map(s=>s.id));if(!ids.size)return[];
+ const rl=await cached('wmr|'+region,216e5,()=>jf(`https://api.watchmode.com/v1/releases/?apiKey=${S.wmKey}&limit=250`));
+ const list=(rl.releases||[]).filter(r=>ids.has(r.source_id)&&r.tmdb_id&&r.tmdb_type===kind&&(soon?r.source_release_date>=day():r.source_release_date<=day())).slice(0,24);
+ return(await pool(list,6,async r=>{const x=await tm(`/${kind}/${r.tmdb_id}`);return x&&x.poster_path?{...mk(x,kind),releaseDate:r.source_release_date,year:r.source_release_date.slice(0,4)}:null})).filter(Boolean)}
+async function upc({prov,kind,mode,region,page}){
+ const p=PROV.find(x=>x.k===prov),soon=mode==='soon',a=soon?day():day(-45),b=soon?day(180):day(),calls=[],q={page,include_adult:'false'};
+ if(kind==='movie'){const d={...q,sort_by:soon?'primary_release_date.asc':'popularity.desc'};
+  if(prov==='theatres')Object.assign(d,{region,with_release_type:'2|3','release_date.gte':a,'release_date.lte':b});
+  else if(prov==='all')Object.assign(d,{region,with_release_type:'4','release_date.gte':a,'release_date.lte':b});
+  else Object.assign(d,{with_watch_providers:await pids(p,region),watch_region:region,with_watch_monetization_types:'flatrate|free|ads','primary_release_date.gte':a,'primary_release_date.lte':b});
+  calls.push(tm('/discover/movie',d).then(r=>[r,'movie']))}
+ else{const d={...q,sort_by:soon?'first_air_date.asc':'popularity.desc','first_air_date.gte':a,'first_air_date.lte':b,watch_region:region,with_watch_monetization_types:'flatrate|free|ads'};
+  if(prov!=='all'){d.with_watch_providers=await pids(p,region);if(p.net)calls.push(tm('/discover/tv',{...q,sort_by:d.sort_by,'first_air_date.gte':a,'first_air_date.lte':b,with_networks:p.net}).then(r=>[r,'tv']))}
+  calls.push(tm('/discover/tv',d).then(r=>[r,'tv']))}
+ const ok=(await Promise.all(calls.map(c=>c.catch(()=>null)))).filter(r=>r&&Array.isArray(r[0].results));if(!ok.length)throw new Error('tmdb');
+ let items=[],seen=new Set,mp=1;
+ ok.forEach(([r,t])=>{mp=Math.max(mp,r.total_pages||1);r.results.forEach(x=>{const i=mk(x,t);if(x.poster_path&&!seen.has(i.id)){seen.add(i.id);items.push(i)}})});
+ /* re-release fix: regional dates match old films (e.g. Mohra 1994) — drop titles whose ORIGINAL date is far older than the window */
+ if(kind==='movie'&&(prov==='theatres'||prov==='all')){const lim=new Date(new Date(a).getTime()-200*864e5).toISOString().slice(0,10);items=items.filter(i=>i.releaseDate>=lim)}
+ if(page===1&&p&&p.re){try{(await wm(p,kind,region,soon)).forEach(i=>{const e=items.find(x=>x.id===i.id);if(e)e.releaseDate=i.releaseDate;else items.push(i)})}catch{}}
+ return{items,more:page<Math.min(mp,500)}}
+let U={prov:'theatres',kind:'movie',mode:'soon',items:[],page:1,more:false,loading:false,err:''},utok=0;
+async function loadUp(page=1){const my=++utok;U.loading=true;U.err='';if(page===1)U.items=[];ulist();
+ try{const r=await cached(`up|${U.prov}|${U.kind}|${U.mode}|${S.upRegion}|${page}`,9e5,()=>upc({prov:U.prov,kind:U.kind,mode:U.mode,region:S.upRegion,page}));if(my!==utok)return;
+  const seen=new Set(U.items.map(i=>i.id));U.items=[...U.items,...r.items.filter(i=>!seen.has(i.id))];U.more=r.more;U.page=page}
+ catch{if(my!==utok)return;U.err='Couldn’t load. Check your connection or Settings → Diagnostics.'}
+ U.loading=false;ulist()}
+function ulist(){const e=$('#ulist');if(!e)return;const soon=U.mode==='soon',its=[...U.items].sort((a,b)=>soon?(a.releaseDate||'9').localeCompare(b.releaseDate||'9'):byDate(a,b));
+ const gs=[];its.forEach(i=>{const l=i.releaseDate?new Date(i.releaseDate+'T00:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'}):'TBA',g=gs[gs.length-1];g&&g.l===l?g.i.push(i):gs.push({l,i:[i]})});
+ e.innerHTML=gs.map(g=>`<h3 class="mu" style="font-size:12px;text-transform:uppercase">${g.l}</h3><div class="grid">${g.i.map(i=>card(i,{date:1})).join('')}</div>`).join('')+(U.loading?spin:'')+(U.err?`<p style="color:#f87171">${U.err}</p><button class="btn2" data-a="uretry">Retry</button>`:'')+(!U.loading&&!U.err&&!U.items.length?'<p class="mu" style="text-align:center;margin-top:40px">Nothing listed for this window.<br><small>TMDB has few future OTT dates for small providers. Add a Watchmode key in Settings, or try “All Streaming” / “Just Released”.</small></p>':'')+(U.more&&!U.loading?'<button class="btn2 g" data-a="umore">Load more</button>':'')}
+function upPage(){const b=(a,v,l,on)=>`<button class="${on?'on':''}" data-a="${a}" data-v="${v}">${l}</button>`;
+ $('#main').innerHTML=`<div class="pad"><div class="seg">${b('uk','movie','🎬 Movies',U.kind==='movie')}${b('uk','tv','📺 Series',U.kind==='tv')}<select data-a="ur">${['IN','US','GB','CA','AU','JP'].map(r=>`<option ${r===S.upRegion?'selected':''}>${r}</option>`).join('')}</select></div><div class="seg">${b('um','soon','⏳ Coming Soon',U.mode==='soon')}${b('um','new','✨ Just Released',U.mode==='new')}</div><div class="chips">${PROV.filter(p=>!(p.k==='theatres'&&U.kind==='tv')).map(p=>`<button class="ch${U.prov===p.k?' on':''}" data-a="up" data-v="${p.k}">${p.l}</button>`).join('')}</div><div id="ulist"></div></div>`;loadUp(1)}
+
+/* ---------- Vault ---------- */
+const VS={q:'',f:[],st:'all',sort:'recent',n:40};
+const CH=['Movies','Series','Anime','18+','Mature','Action','Comedy','Drama','Horror','Romance','Sci-Fi','Thriller','Documentary','Animation','Crime','Fantasy','Mystery'];
+const AL={Action:['action','action & adventure'],'Sci-Fi':['science fiction','sci-fi & fantasy','sci-fi'],Fantasy:['fantasy','sci-fi & fantasy']};
+const isMov=i=>i.type==='movie'||(i.type==='anime'&&(i.animeFormat||'').toUpperCase()==='MOVIE');
+function has(i,f){if(f==='Movies')return isMov(i);if(f==='Series')return!isMov(i);if(f==='Anime')return i.type==='anime'||!!i.isAnime;if(f==='18+')return(i.adultLevel||0)>=2;if(f==='Mature')return(i.adultLevel||0)>=1;
+ const a=AL[f]||[f.toLowerCase()];return(i.genres||[]).some(g=>a.includes(g.toLowerCase()))||(i.customTags||[]).some(t=>t.toLowerCase()===f.toLowerCase())}
+function vlist(){const tk=VS.q.trim().split(/\s+/).filter(Boolean),hs=tk.filter(t=>t[0]==='#'&&t.length>1).map(t=>t.slice(1).toLowerCase()),tx=tk.filter(t=>t[0]!=='#').join(' ').toLowerCase();
+ let l=V.filter(i=>(VS.st==='all'||i.status===VS.st)&&VS.f.every(f=>has(i,f))&&hs.every(h=>(i.genres||[]).concat(i.customTags||[]).some(g=>g.toLowerCase().includes(h))||(h==='anime'&&has(i,'Anime'))||(h==='18+'&&has(i,'18+')))&&(!tx||i.title.toLowerCase().includes(tx)));
+ const s=VS.sort;return l.sort((a,b)=>s==='title'?a.title.localeCompare(b.title):s==='year'?(b.year||0)-(a.year||0):s==='rating'?(b.soulRating||0)-(a.soulRating||0):(b.addedAt||0)-(a.addedAt||0))}
+function vgrid(){const g=$('#grid');if(!g)return;const l=vlist(),p=V.filter(i=>i.meta!==META&&!failed.has(i.id)).length;
+ $('#vchips').innerHTML=CH.map(f=>{const n=f==='Anime'||f==='18+'?` ${V.filter(i=>has(i,f)).length}`:'';return`<button class="ch${VS.f.includes(f)?' on':''}" data-a="vf" data-v="${f}">${f==='18+'?'🔞 18+':f}${n}</button>`}).join('');
+ $('#vmsg').textContent=(p&&scanning?`🏷 Analysing ${p} items for genres, anime & 18+ tags… `:'')+(failed.size?`${failed.size} couldn’t be analysed (tap Settings → Re-scan). `:'')+`${l.length} shown`;
+ g.innerHTML=l.slice(0,VS.n).map(i=>card(i)).join('')||'<p class="mu" style="grid-column:1/-1;text-align:center;margin-top:30px">Nothing matches.</p>';$('#more').classList.toggle('hid',l.length<=VS.n)}
+function vault(){$('#main').innerHTML=`<div class="pad"><input class="in" id="vq" placeholder="Search title or #tag…" value="${esc(VS.q)}"><div class="chips" id="vchips"></div><div style="display:flex;gap:8px"><select data-a="vst">${[['all','All'],['backlog','Plan'],['watching','Active'],['completed','Done'],['dropped','Dropped']].map(([k,l])=>`<option value="${k}"${VS.st===k?' selected':''}>${l}</option>`).join('')}</select><select data-a="vso">${[['recent','Newest added'],['title','A–Z'],['year','Year'],['rating','My rating']].map(([k,l])=>`<option value="${k}"${VS.sort===k?' selected':''}>${l}</option>`).join('')}</select></div><p id="vmsg" class="mu" style="font-size:11px"></p><div class="grid" id="grid"></div><button class="btn2 g hid" id="more" data-a="more">Show more</button></div>`;
+ $('#vq').oninput=deb(e=>{VS.q=e.target.value;VS.n=40;vgrid()},200);vgrid();scan()}
+
+/* ---------- Sheets (detail / search / bulk) ---------- */
+let sheetOpen=false;
+function openSheet(h){$('#sheet').innerHTML=h;$('#sheet').classList.add('open');$('#sheet').scrollTop=0;if(!sheetOpen){history.pushState({s:1},'');sheetOpen=true}}
+function closeSheet(back){$('#sheet').classList.remove('open');if(sheetOpen){sheetOpen=false;if(!back&&history.state&&history.state.s)history.back()}}
+addEventListener('popstate',()=>{if(sheetOpen)closeSheet(true)});
+let DET=null;
+const detHTML=()=>{const{it,x}=DET,m=V.find(v=>v.id===it.id),st=m?m.status:'none',t=m||DET.tg||{},lv=t.adultLevel||0;
+ return`<div class="hero" style="background-image:url('${esc(x.backdrop||it.image||'')}')"><button class="x" data-a="close">✕</button></div><div class="dpad"><div class="dh"><img src="${esc(it.image||'')}" alt=""><div><h2>${esc(it.title)}</h2><p class="mu">${it.type.toUpperCase()} ${it.year||''}${x.rating?' · ★'+x.rating:''}${t.runtime?' · '+t.runtime+'m':''}</p></div></div>
+ <div class="sts">${[['backlog','Plan'],['watching','Active'],['completed','Done'],['dropped','Drop']].map(([k,l])=>`<button class="${st===k?'on':''}" data-a="st" data-v="${k}">${l}</button>`).join('')}</div>${m?'<button class="lnk" data-a="st" data-v="remove">Remove from vault</button>':''}
+ <div class="tg">${lv>=2?`<span class="t r">🔞 18+${t.certification?' · '+esc(t.certification):''}</span>`:lv===1?`<span class="t a">⚠ Mature${t.certification?' · '+esc(t.certification):''}</span>`:t.certification?`<span class="t">${esc(t.certification)}</span>`:''}${it.type==='anime'||t.isAnime?'<span class="t p">Anime</span>':''}${(t.genres||[]).map(g=>`<span class="t">${esc(g)}</span>`).join('')}${(m&&m.customTags||[]).map(g=>`<span class="t" style="color:var(--ac)">#${esc(g)} <b data-a="rt" data-v="${esc(g)}">✕</b></span>`).join('')}</div>
+ ${m?'<input class="in" id="ctag" placeholder="Add custom tag + Enter">':''}
+ <p class="ov">${esc(x.desc||(x.err?'Couldn’t load details — check Settings → Diagnostics.':'Loading…'))}</p>${x.trailer?`<a class="btn2 g" target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=${esc(x.trailer)}">▶ Trailer</a>`:''}
+ <h4>Where to watch (${S.upRegion})</h4>${(x.prov||[]).length?x.prov.map(p=>`<div class="pv"><b>${esc(p[0])}</b><span class="mu">${esc(p[1])}</span></div>`).join(''):x.desc||x.err?'<p class="mu">Not found for this region.</p>':''}</div>`};
+const paintDet=()=>{if(DET&&$('#sheet').classList.contains('open')&&$('#sheet .dpad'))$('#sheet').innerHTML=detHTML()};
+async function jw(it){try{const r=await jf(JWU,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({operationName:'GetSuggestedTitles',variables:{country:S.upRegion,language:'en',first:5,filter:{searchQuery:it.title,objectTypes:[it.type==='movie'?'MOVIE':'SHOW']}},query:'query GetSuggestedTitles($country: Country!, $language: Language!, $first: Int!, $filter: TitleFilter) { popularTitles(country: $country, first: $first, filter: $filter) { edges { node { content(country: $country, language: $language) { title } offers(country: $country, platform: WEB) { monetizationType retailPrice(language: $language) package { clearName } } } } } }'})},8000);
+ const n=((r.data.popularTitles.edges[0]||{}).node||{}).offers||[],T={FLATRATE:'Stream',FREE:'Free',ADS:'Free with ads',RENT:'Rent',BUY:'Buy'},seen=new Set;return n.filter(o=>{const k=o.package.clearName+o.monetizationType;return!seen.has(k)&&seen.add(k)}).map(o=>[o.package.clearName,(T[o.monetizationType]||o.monetizationType)+(o.retailPrice?' · '+o.retailPrice:'')])}catch{return[]}}
+async function openItem(it){
+ vib();const m=V.find(v=>v.id===it.id);DET={it:m||{...it},x:{}};openSheet(detHTML());const mine=DET;
+ try{let x,tg;
+  if(it.type==='anime'){const d=(await ani('query($id:Int){Media(idMal:$id,type:ANIME){format genres isAdult averageScore duration description(asHtml:false) tags{name rank} trailer{id site}}}',{id:it.aid})).data.Media;if(!d)throw 0;const l=aniLvl(d);
+   tg={genres:d.genres||[],adultLevel:l,isMature:l===2,animeFormat:d.format||'',isAnime:true,runtime:d.duration||undefined,meta:META};x={desc:(d.description||'').replace(/<[^>]+>/g,''),rating:d.averageScore?(d.averageScore/10).toFixed(1):'',trailer:d.trailer&&d.trailer.site==='youtube'?d.trailer.id:'',prov:[]}}
+  else{const d=await tm(`/${it.type}/${it.aid}`,{append_to_response:`videos,watch/providers,keywords,${it.type==='movie'?'release_dates':'content_ratings'}`});if(d.success===false||d.id==null)throw 0;tg={...tags(d,it.type),runtime:d.runtime||(d.episode_run_time||[])[0]};
+   const w=(d['watch/providers']||{}).results||{},wp=w[S.upRegion]||{},T=[['flatrate','Stream'],['free','Free'],['ads','Free with ads'],['rent','Rent']];
+   x={desc:d.overview,backdrop:img(d.backdrop_path,'w780'),rating:d.vote_average?d.vote_average.toFixed(1):'',trailer:((d.videos&&d.videos.results||[]).find(v=>v.site==='YouTube'&&v.type==='Trailer')||{}).key,prov:T.flatMap(([k,l])=>(wp[k]||[]).map(p=>[p.provider_name,l]))}}
+  if(DET!==mine)return;DET.x=x;DET.tg=tg;const mm=V.find(v=>v.id===it.id);if(mm){Object.assign(mm,tg);persist()}paintDet();
+  const j=await jw(it);if(DET===mine&&j.length){const s=new Set(j.map(p=>p[0]));DET.x.prov=[...j,...(DET.x.prov||[]).filter(p=>!s.has(p[0]))];paintDet()}
+ }catch{if(DET===mine){DET.x={err:1};paintDet()}}}
+function setSt(v){const it=DET.it;let m=V.find(x=>x.id===it.id);
+ if(v==='remove'){V=V.filter(x=>x.id!==it.id);DET.it={...it,status:'none'};toast('Removed')}
+ else if(m){m.status=v;if(v==='completed')m.completedAt=Date.now()}
+ else{m={...it,...(DET.tg||{}),status:v,addedAt:Date.now(),soulRating:0,customTags:[],personalNote:''};if(v==='completed')m.completedAt=Date.now();V=[m,...V];DET.it=m;toast('Added to Vault');if(!DET.tg)setTimeout(scan,500)}
+ vib();persist();paintDet();if(tab==='vault')vgrid()}
+const CL=l=>{let p=l.replace(/^[•·\-*>#]+\s*/,'').replace(/^\d+[.)]\s+/,'').replace(/\[.*?\]/g,' ').replace(/\((?!19\d\d|20\d\d)[^)]*\)/g,' ').replace(/\b(3d|imax|hdr10?|bluray|blu-ray|brrip|bdrip|web-?dl|webrip|hdtv|dvd|extended|remastered|unrated|dubbed|dub|hindi|english|tamil|telugu|multi|dual.audio|season\s*\d+|480p|720p|1080p|2160p|4k|x26[45]|hevc|amzn|netflix)\b/gi,' ');if(p.includes('/'))p=p.split('/')[0];const y=(p.match(/\b(19|20)\d\d\b/)||[])[0];if(y)p=p.replace(y,'');p=p.replace(/[()]/g,' ').replace(/\s+/g,' ').trim();return[p||l,y]};
+async function bulk(){const lines=[...new Set($('#bk').value.split('\n').map(s=>s.trim()).filter(Boolean))];if(!lines.length)return toast('Paste titles, one per line');
+ const have=new Set(V.map(i=>i.id)),msg=$('#bkm');let done=0,add=[],miss=[];
+ await pool(lines,3,async l=>{const[p,y]=CL(l);const r=await tm('/search/multi',{query:p,include_adult:String(!!S.adult)});if(!Array.isArray(r.results))throw 0;
+  let c=r.results.filter(x=>x.media_type==='movie'||x.media_type==='tv');const ex=c.find(x=>(x.title||x.name||'').toLowerCase()===p.toLowerCase());if(ex)c=[ex,...c.filter(x=>x!==ex)];if(y)c=[...c.filter(x=>(x.release_date||x.first_air_date||'').startsWith(y)),...c.filter(x=>!(x.release_date||x.first_air_date||'').startsWith(y))];
+  let it=c[0]?mk(c[0],c[0].media_type):null;
+  if(!it){const a=await ani('query($q:String){Page(perPage:1){media(search:$q,type:ANIME){idMal format title{romaji english}coverImage{large}startDate{year}}}}',{q:p});const m=a.data.Page.media[0];if(m&&m.idMal)it=aniItem(m)}
+  if(it&&!have.has(it.id)){have.add(it.id);add.push(it)}else if(!it)miss.push(l);done++;msg.textContent=`Searching ${done}/${lines.length}…`});
+ V=[...add.map(i=>({...i,status:'backlog',addedAt:Date.now(),soulRating:0,customTags:[],personalNote:''})),...V];persist();msg.textContent=`Added ${add.length}. Not found: ${miss.length}${miss.length?' — '+miss.slice(0,5).join(', '):''}. Tags are filling in…`;setTimeout(scan,500);if(tab==='vault')vgrid()}
+function addSheet(t){openSheet(`<div class="pad" style="padding-top:calc(env(safe-area-inset-top,0px) + 14px)"><div class="seg"><button data-a="at" data-v="s" class="${t==='s'?'on':''}">Search</button><button data-a="at" data-v="b" class="${t==='b'?'on':''}">Bulk paste</button><button data-a="close">✕</button></div>${t==='s'?'<input class="in" id="sq" placeholder="Movie, series or anime…" autofocus><div id="sr" class="grid"></div>':'<textarea id="bk" placeholder="One title per line (quality tags & years are cleaned automatically)"></textarea><button class="btn2" data-a="bulk">Add all to Plan</button><p id="bkm" class="mu"></p>'}</div>`);
+ if(t==='s')$('#sq').oninput=deb(async e=>{const q=e.target.value.trim(),o=$('#sr');if(!q){o.innerHTML='';return}o.innerHTML=spin;
+  const[a,b]=await Promise.all([tm('/search/multi',{query:q,include_adult:String(!!S.adult)}).catch(()=>({})),ani('query($q:String,$a:Boolean){Page(perPage:6){media(search:$q,type:ANIME,isAdult:$a){idMal format title{romaji english}coverImage{large}startDate{year}}}}',{q,a:S.adult?null:false}).catch(()=>null)]);
+  const l=[...(a.results||[]).filter(x=>(x.media_type==='movie'||x.media_type==='tv')&&x.poster_path).slice(0,10).map(x=>mk(x,x.media_type)),...((b&&b.data.Page.media)||[]).filter(m=>m.idMal).map(aniItem)];
+  o.innerHTML=l.map(i=>card(i)).join('')||'<p class="mu">No results (or TMDB blocked — see Settings → Diagnostics).</p>'},400)}
+
+/* ---------- Settings ---------- */
+const tgl=(k,l)=>`<label>${l}<input type="checkbox" data-a="tg" data-v="${k}" ${S[k]?'checked':''} style="width:22px;height:22px"></label>`;
+function settings(){$('#main').innerHTML=`<div class="pad"><div class="card"><b>🩺 Diagnostics</b><button class="btn2" data-a="diag">Run connection test</button><div id="dg"></div></div>
+<div class="card"><b>🌍 Region & content</b><label>Streaming / upcoming region<select data-a="ur2" style="width:90px;margin:0">${['IN','US','GB','CA','AU','JP'].map(r=>`<option ${r===S.upRegion?'selected':''}>${r}</option>`).join('')}</select></label>${tgl('adult','Allow 18+ TMDB listings & adult search')}</div>
+<div class="card"><b>🔑 Keys & proxy (all free)</b><input class="in" id="k1" placeholder="Watchmode API key (OTT release dates)" value="${esc(S.wmKey)}"><input class="in" id="k2" placeholder="TMDB token (optional, uses built-in)" value="${esc(S.tmdbKey)}"><input class="in" id="k3" placeholder="TMDB API proxy, e.g. https://x.workers.dev/3" value="${esc(S.tmdbBase)}"><input class="in" id="k4" placeholder="TMDB image proxy, e.g. https://x.workers.dev/t/p" value="${esc(S.imgBase)}"><button class="btn2 g" data-a="ks">Save</button></div>
+<div class="card"><b>💾 Data</b><button class="btn2" data-a="exp">Export backup</button><label class="btn2 g">Import backup<input type="file" accept=".json" id="imp" class="hid"></label><button class="btn2 g" data-a="rescan">🏷 Re-scan all tags (anime / 18+ / genres)</button><button class="btn2 g" data-a="clr">Clear cache</button></div></div>`;
+ $('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{try{const c=JSON.parse(r.result);if(!c||!c.vault&&!c.playlists&&!c.settings)throw 0;if(c.vault)LS.set('omni16_data',c.vault);if(c.playlists)LS.set('omni16_lists',c.playlists);if(c.settings)LS.set('omni16_settings',{...S,...c.settings});toast('Imported — reloading');setTimeout(()=>location.reload(),900)}catch{toast('Invalid backup file')}};r.readAsText(f)}}
+async function diag(){const o=$('#dg');o.innerHTML='';const row=(n,ok,ms,m)=>o.insertAdjacentHTML('beforeend',`<div class="${ok?'ok':'bad'}"><span>${ok?'✅':'❌'} ${n}</span><span>${ok?ms+' ms':esc(m||'failed')}</span></div>`);
+ const T=[['TMDB API',()=>tm('/configuration').then(a=>{if(!a.images)throw new Error(a.status_message||'bad token')})],
+ ['TMDB images',()=>new Promise((r,j)=>{const i=new Image,t=setTimeout(()=>j(new Error('timeout')),8000);i.onload=()=>{clearTimeout(t);r()};i.onerror=()=>{clearTimeout(t);j(new Error('blocked'))};const p=[...reg.values()].find(x=>x.image&&x.image.includes('/t/p')||x.image&&x.image.startsWith('http'));if(!p){clearTimeout(t);return j(new Error('open Explore first'))}i.src=p.image+'?t='+Date.now()})],
+ ['AniList',()=>ani('query{Page(perPage:1){media(type:ANIME){idMal}}}').then(a=>{if(!a.data)throw 0})],
+ ['Jikan (backup)',()=>jf(JIKAN+'/top/anime?limit=1',{},7000).then(a=>{if(!a.data)throw 0})],
+ ['JustWatch worker',()=>jw({title:'Matrix',type:'movie'}).then(a=>{if(!a.length)throw new Error('no data')})],
+ ...(S.wmKey?[['Watchmode',()=>jf(`https://api.watchmode.com/v1/sources/?apiKey=${S.wmKey}&regions=${S.upRegion}`).then(a=>{if(!Array.isArray(a))throw new Error(a.statusMessage||'bad key')})]]:[['Watchmode',()=>Promise.reject(new Error('no key set'))]])];
+ await Promise.all(T.map(async([n,f])=>{const t=performance.now();try{await f();row(n,1,Math.round(performance.now()-t))}catch(e){row(n,0,0,e.name==='AbortError'?'timed out':e.message)}}))}
+
+/* ---------- router & events ---------- */
+let tab='explore';const TABS=[['explore','🧭','Explore'],['upcoming','📅','Upcoming'],['vault','🗂','Vault'],['settings','⚙️','Settings']];
+function go(t){tab=t;$('#hd').innerHTML=`<h1>${t}</h1>${t==='vault'?'<button class="ch on" data-a="add" style="font-size:18px">＋</button>':''}`;$('#nav').innerHTML=TABS.map(([k,e,l])=>`<button class="${k===t?'on':''}" data-a="go" data-v="${k}"><span>${e}</span>${l}</button>`).join('');$('#main').scrollTop=0;({explore,upcoming:upPage,vault,settings})[t]()}
+const A={
+ go:e=>go(e.dataset.v),close:()=>closeSheet(),add:()=>addSheet('s'),at:e=>addSheet(e.dataset.v),bulk,diag,
+ st:e=>setSt(e.dataset.v),rt:e=>{const m=V.find(v=>v.id===DET.it.id);if(m){m.customTags=(m.customTags||[]).filter(t=>t!==e.dataset.v);persist();paintDet()}},
+ vf:e=>{const f=e.dataset.v;VS.f=VS.f.includes(f)?VS.f.filter(x=>x!==f):[...VS.f,f];VS.n=40;vgrid()},more:()=>{VS.n+=40;vgrid()},
+ vst:e=>{VS.st=e.value;VS.n=40;vgrid()},vso:e=>{VS.sort=e.value;vgrid()},
+ uk:e=>{U.kind=e.dataset.v;if(U.kind==='tv'&&U.prov==='theatres')U.prov='all';upPage()},um:e=>{U.mode=e.dataset.v;upPage()},up:e=>{U.prov=e.dataset.v;upPage()},ur:e=>{S.upRegion=e.value;saveS();upPage()},
+ umore:()=>loadUp(U.page+1),uretry:()=>loadUp(U.page||1),
+ exr:()=>exLoad(true),shuf:()=>{LS.set('shuf',(+LS.get('shuf',0))+1);exLoad(true);toast('Shuffled')},
+ tg:e=>{S[e.dataset.v]=e.checked;saveS();pruneCache(true);Object.keys(mem).forEach(k=>delete mem[k]);toast('Saved')},
+ ur2:e=>{S.upRegion=e.value;saveS();pruneCache(true);toast('Region saved')},
+ ks:()=>{S.wmKey=$('#k1').value.trim();S.tmdbKey=$('#k2').value.trim();S.tmdbBase=$('#k3').value.trim();S.imgBase=$('#k4').value.trim();saveS();pruneCache(true);toast('Saved')},
+ exp:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({vault:V,playlists:PL,settings:S})],{type:'application/json'}));a.download=`OmniVault_Backup_${day()}.json`;a.click();toast('Exported')},
+ rescan:()=>{failed.clear();V=V.map(i=>({...i,meta:0}));persist();toast('Re-scanning tags…');scan()},clr:()=>{pruneCache(true);Object.keys(mem).forEach(k=>delete mem[k]);toast('Cache cleared')}};
+document.addEventListener('click',e=>{const t=e.target;if(/^(SELECT|INPUT|TEXTAREA|OPTION)$/.test(t.tagName))return;
+ const a=t.closest('[data-a]');if(a&&A[a.dataset.a]){e.preventDefault();vib();A[a.dataset.a](a);return}
+ const o=t.closest('[data-open]');if(o){const i=reg.get(o.dataset.open)||V.find(v=>v.id===o.dataset.open);if(i)openItem(i)}});
+document.addEventListener('change',e=>{const t=e.target,a=t.dataset&&t.dataset.a;if(a&&A[a])A[a](t)});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='ctag'&&e.target.value.trim()){const m=V.find(v=>v.id===DET.it.id);if(m){m.customTags=[...(m.customTags||[]),e.target.value.trim()];persist();paintDet()}}});
+window.addEventListener('error',()=>{});
+document.documentElement.style.setProperty('--ac',S.accent||'#3b82f6');
+pruneCache();go('explore');setTimeout(scan,2500);
+})();
+</script></body></html>
